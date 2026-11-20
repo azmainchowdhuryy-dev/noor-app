@@ -29,14 +29,41 @@ jobs:
           elif [ -f "noor_app/pubspec.yaml" ]; then
             DIR="noor_app"
           else
-            echo "ERROR: pubspec.yaml পাওয়া যায়নি! রিপোজিটরির রুটে বা noor_app/ ফোল্ডারে pubspec.yaml থাকা আবশ্যক।"
+            echo "ERROR: pubspec.yaml পাওয়া যায়নি!"
             exit 1
           fi
 
-          # ব্রাউজার আপলোডের সময় ফোল্ডার ভেঙে গেলে main.dart ও অন্যান্য .dart ফাইল lib/ এ গুছিয়ে আনা
+          # ব্রাউজার আপলোডের সময় .dart ফাইল রুটে থাকলে lib/ এ গুছিয়ে আনা
           if [ ! -d "$DIR/lib" ] && [ -f "$DIR/main.dart" ]; then
             mkdir -p "$DIR/lib"
             mv "$DIR"/*.dart "$DIR/lib/" 2>/dev/null || true
+          fi
+
+          # যদি lib/ এর ভেতরে সাব-ফোল্ডার (models, screens, services, widgets, localization, theme, data) না থাকে,
+          # তবে ফ্ল্যাট হয়ে থাকা ফাইলগুলো স্বয়ংক্রিয়ভাবে সঠিক সাব-ফোল্ডারে সরিয়ে নেওয়া
+          if [ -d "$DIR/lib" ] && [ ! -d "$DIR/lib/models" ]; then
+            mkdir -p "$DIR/lib/data" "$DIR/lib/localization" "$DIR/lib/models" "$DIR/lib/screens" "$DIR/lib/services" "$DIR/lib/theme" "$DIR/lib/widgets"
+            for f in hadith_repository.dart quick_actions.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/data/"
+            done
+            for f in app_strings.dart date_names.dart digits.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/localization/"
+            done
+            for f in allah_name.dart app_location.dart dua.dart hadith.dart prayer.dart quick_action.dart surah.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/models/"
+            done
+            for f in hadis_dua_screen.dart home_screen.dart main_shell.dart more_screen.dart tasbih_screen.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/screens/"
+            done
+            for f in bookmark_service.dart date_service.dart location_service.dart prayer_service.dart settings_service.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/services/"
+            done
+            for f in app_colors.dart app_theme.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/theme/"
+            done
+            for f in date_card.dart hadith_card.dart location_header.dart placeholder_body.dart prayer_card.dart quick_action_grid.dart section_title.dart; do
+              [ -f "$DIR/lib/$f" ] && mv "$DIR/lib/$f" "$DIR/lib/widgets/"
+            done
           fi
 
           # assets/*.json রুটে থাকলে assets/data/ তে গুছিয়ে আনা
